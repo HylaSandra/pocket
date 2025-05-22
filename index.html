@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pocket</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Pocket</h1>
+  <nav>
+    <a href="index.html">Dodaj transakcję</a> |
+    <a href="expenses.html">Wydatki</a> |
+    <a href="income.html">Przychody</a> |
+    <a href="budget.html">Budżet</a>
+  </nav>
+
+  <form id="transaction-form">
+    <label>
+      Typ transakcji:
+      <select id="type" required>
+        <option value="income">Przychód</option>
+        <option value="expense">Wydatek</option>
+      </select>
+    </label>
+
+    <label>
+      Kategoria (dla wydatku):
+      <select id="category" disabled required>
+        <option value="">Wybierz kategorię</option>
+        <option value="spożywcze">Artykuły spożywcze</option>
+        <option value="dom">Dom</option>
+        <option value="transport">Transport</option>
+        <option value="zdrowie">Zdrowie</option>
+        <option value="rozrywka">Rozrywka</option>
+        <option value="edukacja">Edukacja</option>
+        <option value="inne">Inne</option>
+      </select>
+    </label>
+
+    <label>
+      Kwota:
+      <input type="number" id="amount" required placeholder="np. 120.50" />
+    </label>
+
+    <label>
+      Data:
+      <input type="date" id="date" required />
+    </label>
+
+    <label>
+      Opis (opcjonalnie):
+      <input type="text" id="description" placeholder="np. zakupy w Lidlu" />
+    </label>
+
+    <button type="submit">Dodaj transakcję</button>
+  </form>
+
+  <ul id="transaction-list"></ul>
+
+  <script src="app.js"></script>
+  <script>
+    const form = document.getElementById('transaction-form');
+    const typeSelect = document.getElementById('type');
+    const categorySelect = document.getElementById('category');
+    const list = document.getElementById('transaction-list');
+
+    // Toggle category
+    typeSelect.addEventListener('change', () => {
+      if (typeSelect.value === 'expense') {
+        categorySelect.disabled = false;
+      } else {
+        categorySelect.disabled = true;
+        categorySelect.value = '';
+      }
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const type = typeSelect.value;
+      const category = type === 'expense' ? categorySelect.value : null;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const date = document.getElementById('date').value;
+      const description = document.getElementById('description').value;
+      const tx = { amount: type === 'expense' ? -amount : amount, category, date, description };
+      
+      // Save locally
+      const arr = JSON.parse(localStorage.getItem('transactions') || '[]');
+      arr.push(tx);
+      localStorage.setItem('transactions', JSON.stringify(arr));
+
+      // Save to server
+      await fetch('https://pocket-be-xt4u.onrender.com/api/transactions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tx)
+      });
+
+      // Refresh list
+      loadTransactions();
+      form.reset();
+      categorySelect.disabled = true;
+    });
+
+    async function loadTransactions() {
+      const res = await fetch('https://pocket-be-xt4u.onrender.com/api/transactions');
+      const { transactions } = await res.json();
+      list.innerHTML = '';
+      transactions.forEach(t => {
+        const li = document.createElement('li');
+        let text = `${t.amount} zł`;
+        if (t.category) text += ` (${t.category})`;
+        if (t.description) text += ` - ${t.description}`;
+        text += ` [${new Date(t.date).toLocaleDateString()}]`;
+        li.textContent = text;
+        list.append(li);
+      });
+    }
+
+    // Initial load
+    loadTransactions();
+  </script>
+</body>
+</html>

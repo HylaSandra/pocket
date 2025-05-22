@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pocket – Wydatki</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Wydatki</h1>
+  <nav>
+    <a href="index.html">Dodaj transakcję</a> |
+    <a href="expenses.html">Wydatki</a> |
+    <a href="income.html">Przychody</a> |
+    <a href="budget.html">Budżet</a>
+  </nav>
+
+  <div id="date-filters">
+    <label>Od: <input type="date" id="start-date" /></label>
+    <label>Do: <input type="date" id="end-date" /></label>
+    <button id="filter-btn">Filtruj</button>
+  </div>
+
+  <p id="total-sum">Suma wydatków: 0 zł</p>
+
+  <ul id="transaction-list"></ul>
+
+  <script src="app.js"></script>
+  <script>
+    const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
+
+    const list = document.getElementById('transaction-list');
+    const totalSumElem = document.getElementById('total-sum');
+    const filterBtn = document.getElementById('filter-btn');
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+
+    let transactions = [];
+
+    // --- Synchronizacja z backendem ---
+    async function loadDataFromServer() {
+      try {
+        const res = await fetch(`${API_BASE}/transactions`);
+        if (!res.ok) throw new Error('Błąd pobierania danych');
+        const data = await res.json();
+        transactions = data.transactions;
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+      } catch (error) {
+        const localData = localStorage.getItem('transactions');
+        transactions = localData ? JSON.parse(localData) : [];
+      }
+    }
+
+    async function syncDataToServer() {
+      try {
+        await fetch(`${API_BASE}/transactions/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transactions })
+        });
+      } catch (error) {
+        console.warn('Błąd synchronizacji danych na serwerze');
+      }
+    }
+
+    // --- Renderowanie listy ---
+    function filterTransactionsByDate(txs, startDate, endDate) {
+      return txs.filter(t => t.amount < 0 &&
+        (!startDate || new Date(t.date) >= startDate) &&
+        (!endDate || new Date(t.date) <= endDate)
+      );
+    }
+
+    function renderTransactions() {
+      list.innerHTML = '';
+      const startDate = startDateInput.value ? new Date(startDateInput.value) : null;
+      const endDate = endDateInput.value ? new Date(endDateInput.value) : null;
+      const filtered = filterTransactionsByDate(transactions, startDate, endDate);
+      if (filtered.length === 0) {
+        list.innerHTML = '<li>Brak wydatków w tym okresie.</li>';
+        totalSumElem.textContent = 'Suma wydatków: 0 zł';
+        return;
+      }
+      let sum = 0;
+      filtered.forEach(t => {
+        sum += Number(t.amount);
+        const li = document.createElement('li');
+        const id = t._id || t.id || '';
+        li.innerHTML = `➖ <strong>${t.amount} zł</strong> — ${t.description || ''}<br />Kategoria: ${t.category}<br />Data: ${new Date(t.date).toLocaleDateString()}<br /><button data-id="${id}" class="delete-btn">Usuń</button>`;
+        list.append(li);
+      });
+      totalSumElem.textContent = `Suma wydatków: ${Math.abs(sum).toFixed(2)} zł`;
+    }
+
+    // --- Usuwanie transakcji ---
+    async function deleteTransaction(id) {
+      transactions = transactions.filter(t => (t._id !== id && t.id !== id));
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+      renderTransactions();
+      try {
+        await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+      } catch (error) {
+        console.warn('Błąd usuwania transakcji na serwerze');
+      }
+    }
+
+    list.addEventListener('click', e => {
+      if (e.target.classList.contains('delete-btn')) {
+        const id = e.target.dataset.id;
+        if (id && confirm('Czy na pewno chcesz usunąć tę transakcję?')) {
+          deleteTransaction(id);
+        }
+      }
+    });
+
+    // --- Inicjalizacja ---
+    async function init() {
+      await loadDataFromServer();
+      renderTransactions();
+    }
+
+    filterBtn.addEventListener('click', renderTransactions);
+    init();
+  </script>
+</body>
+</html>

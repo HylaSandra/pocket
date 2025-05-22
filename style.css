@@ -1,0 +1,6 @@
+body { font-family: sans-serif; margin: 1rem; }
+h1 { color: #007bff; }
+form, ul { margin-top: 1rem; }
+li { margin: 0.5rem 0; }
+button { padding: 0.5rem 1rem; border: none; background: #007bff; color: white; border-radius: 4px; }
+input, select { padding: 0.5rem; margin-right: 0.5rem; }
