@@ -23,52 +23,70 @@
 
   <p id="total-sum">Suma wydatków: 0 zł</p>
   <ul id="transaction-list"></ul>
-  <script src="app.js"></script>
   <script>
     const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
-    const list = document.getElementById('transaction-list');
-    const totalSum = document.getElementById('total-sum');
-    const filterBtn = document.getElementById('filter-btn');
-    const startDate = document.getElementById('start-date');
-    const endDate = document.getElementById('end-date');
-    let txs = [];
-    async function loadData() {
+    let transactions = [];
+
+    async function loadExpenses() {
       try {
         const res = await fetch(`${API_BASE}/transactions`);
-        const data = await res.json();
-        txs = data.transactions;
-        localStorage.setItem('transactions', JSON.stringify(txs));
+        if (!res.ok) throw new Error('Błąd sieci');
+        const { transactions: txs } = await res.json();
+        transactions = txs;
+        localStorage.setItem('transactions', JSON.stringify(transactions));
       } catch {
-        txs = JSON.parse(localStorage.getItem('transactions')||'[]');
+        transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
       }
-      render();
+      renderExpenses();
     }
-    function filterTx() {
-      const s = startDate.value ? new Date(startDate.value) : null;
-      const e = endDate.value ? new Date(endDate.value) : null;
-      return txs.filter(t => t.amount<0 && (!s||new Date(t.date)>=s) && (!e||new Date(t.date)<=e));
+
+    function filterExpenses(start, end) {
+      return transactions.filter(t => t.amount < 0 &&
+        (!start || new Date(t.date) >= start) &&
+        (!end || new Date(t.date) <= end)
+      );
     }
-    function render() {
-      const arr = filterTx();
-      list.innerHTML = arr.length?
-        arr.map(t=>`<li>➖ ${Math.abs(t.amount)} zł (${t.category}) [${new Date(t.date).toLocaleDateString()}] <button data-id="${t._id}" class="delete-btn">Usuń</button></li>`).join(''):
-        '<li>Brak wydatków w tym okresie.</li>';
-      const sum = arr.reduce((a,t)=>a+Math.abs(t.amount),0);
+
+    function renderExpenses() {
+      const start = startDate.value ? new Date(startDate.value) : null;
+      const end = endDate.value ? new Date(endDate.value) : null;
+      const list = filterExpenses(start, end);
+      transaction-list.innerHTML = '';
+      if (list.length === 0) {
+        transactionList.innerHTML = '<li>Brak wydatków w tym okresie.</li>';
+        totalSum.textContent = 'Suma wydatków: 0 zł';
+        return;
+      }
+      let sum = 0;
+      const fragment = document.createDocumentFragment();
+      list.forEach(t => {
+        sum += Math.abs(t.amount);
+        const li = document.createElement('li');
+        li.innerHTML = `➖ ${Math.abs(t.amount)} zł (${t.category}) [${new Date(t.date).toLocaleDateString()}] <button data-id="${t._id}" class="delete-btn">Usuń</button>`;
+        fragment.appendChild(li);
+      });
+      document.getElementById('transaction-list').appendChild(fragment);
       totalSum.textContent = `Suma wydatków: ${sum.toFixed(2)} zł`;
     }
-    async function deleteTx(id) {
-      txs = txs.filter(t=>t._id!==id);
-      localStorage.setItem('transactions',JSON.stringify(txs));
-      render();
-      try { await fetch(`${API_BASE}/transactions/${id}`,{method:'DELETE'}); } catch{};
-    }
-    list.addEventListener('click',e=>{
-      if(e.target.classList.contains('delete-btn')){
-        deleteTx(e.target.dataset.id);
+
+    document.getElementById('filter-btn').addEventListener('click', renderExpenses);
+    document.getElementById('transaction-list').addEventListener('click', e => {
+      if (e.target.classList.contains('delete-btn')) {
+        deleteExpense(e.target.dataset.id);
       }
     });
-    filterBtn.addEventListener('click',render);
-    loadData();
+
+    async function deleteExpense(id) {
+      transactions = transactions.filter(t => t._id !== id);
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+      renderExpenses();
+      try {
+        await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+      } catch {}
+    }
+
+    // Init
+    loadExpenses();
   </script>
 </body>
 </html>
