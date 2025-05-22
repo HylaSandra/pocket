@@ -11,7 +11,14 @@ const FILES = [
 
 self.addEventListener('install', evt => {
   evt.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(FILES))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        await cache.addAll(FILES);
+      } catch (err) {
+        console.error('Cache installation failed:', err);
+      }
+    })()
   );
   self.skipWaiting();
 });
