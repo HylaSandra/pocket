@@ -11,14 +11,15 @@ const FILES = [
 self.addEventListener('install', evt => {
   evt.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    // Cache each file, but don't fail install on error
-    await Promise.all(FILES.map(async file => {
-      try {
-        await cache.add(file);
-      } catch (err) {
-        console.warn(`Failed to cache ${file}:`, err);
-      }
-    }));
+    await Promise.all(
+      FILES.map(async file => {
+        try {
+          await cache.add(file);
+        } catch (err) {
+          console.warn(`Failed to cache ${file}:`, err);
+        }
+      })
+    );
   })());
   self.skipWaiting();
 });
@@ -37,15 +38,11 @@ self.addEventListener('activate', evt => {
 self.addEventListener('fetch', evt => {
   // Bypass cache for API requests
   if (evt.request.url.includes('/api/')) {
-    return evt.respondWith(fetch(evt.request));
+    evt.respondWith(fetch(evt.request));
+    return;
   }
-  // For navigation to root, serve index.html
-  if (evt.request.mode === 'navigate') {
-    return evt.respondWith(
-      caches.match('index.html').then(resp => resp || fetch(evt.request))
-    );
-  }
-  // Otherwise serve from cache, fall back to network
+
+  // Cache-first strategy for all other requests
   evt.respondWith(
     caches.match(evt.request).then(resp => resp || fetch(evt.request))
   );
