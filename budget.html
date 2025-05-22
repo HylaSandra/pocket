@@ -30,9 +30,7 @@
 
   <div>
     <h2>Ustaw limity dla kategorii:</h2>
-    <div class="category-limits" id="category-limits">
-      <!-- Kategorie generowane dynamicznie -->
-    </div>
+    <div class="category-limits" id="category-limits"></div>
     <button id="save-category-limits">Zapisz limity</button>
   </div>
 
@@ -47,6 +45,15 @@
   <script>
     const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
     let transactions = [];
+    const budgetInput = document.getElementById('budget-input');
+    const currentBudgetDisplay = document.getElementById('current-budget');
+    const totalExpensesElem = document.getElementById('total-expenses');
+    const totalIncomeElem = document.getElementById('total-income');
+    const warningElem = document.getElementById('warning');
+    const categoryWarnings = document.getElementById('category-warnings');
+    const categoryLimitsElem = document.getElementById('category-limits');
+    const categories = ['artykuły spożywcze','dom','transport','zdrowie','rozrywka','edukacja','inne'];
+
     async function loadTransactions() {
       try {
         const res = await fetch(`${API_BASE}/transactions`);
@@ -55,23 +62,10 @@
         transactions = data.transactions;
         localStorage.setItem('transactions', JSON.stringify(transactions));
       } catch {
-        transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        transactions = JSON.parse(localStorage.getItem('transactions')||'[]');
       }
       renderBudget();
     }
-
-    // Elements
-    const budgetInput = document.getElementById('budget-input');
-    const currentBudgetDisplay = document.getElementById('current-budget');
-    const totalExpensesElem = document.getElementById('total-expenses');
-    const totalIncomeElem = document.getElementById('total-income');
-    const warningElem = document.getElementById('warning');
-    const categoryWarnings = document.getElementById('category-warnings');
-    const categoryLimitsElem = document.getElementById('category-limits');
-
-    const categories = [
-      'artykuły spożywcze', 'dom', 'transport', 'zdrowie', 'rozrywka', 'edukacja', 'inne'
-    ];
 
     function renderCategoryLimitInputs(savedLimits) {
       categoryLimitsElem.innerHTML = '';
@@ -85,86 +79,89 @@
       });
     }
 
+    async function sendPushNotification(title, body) {
+      try {
+        await fetch(`${API_BASE}/send-notification`, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ title, body, url: '/budget.html' })
+        });
+      } catch (err) {
+        console.warn('Push send failed', err);
+      }
+    }
+
     function renderBudget() {
       const now = new Date();
       const m = now.getMonth(), y = now.getFullYear();
       const monthly = transactions.filter(t => {
         const d = new Date(t.date);
-        return d.getMonth() === m && d.getFullYear() === y;
+        return d.getMonth()===m && d.getFullYear()===y;
       });
-
-      const totalExp = monthly.filter(t => t.amount < 0)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-      const totalInc = monthly.filter(t => t.amount > 0)
-        .reduce((sum, t) => sum + t.amount, 0);
+      const totalExp = monthly.filter(t=>t.amount<0)
+        .reduce((sum,t)=>sum+Math.abs(t.amount),0);
+      const totalInc = monthly.filter(t=>t.amount>0)
+        .reduce((sum,t)=>sum+t.amount,0);
 
       totalExpensesElem.textContent = totalExp.toFixed(2);
       totalIncomeElem.textContent = totalInc.toFixed(2);
 
-      // General budget
-      const key = 'monthly-budget';
-      const savedBudget = Number(localStorage.getItem(key) || 0);
+      const key='monthly-budget';
+      const savedBudget = Number(localStorage.getItem(key)||0);
       currentBudgetDisplay.textContent = savedBudget.toFixed(2);
       budgetInput.value = savedBudget;
 
       if (savedBudget > 0 && totalExp > savedBudget) {
+        // Lokalna notyfikacja
         warningElem.textContent = 'Przekroczono miesięczny budżet!';
         showPushNotification('Uwaga!', 'Przekroczono miesięczny budżet!');
+        // Push poprzez backend
+        sendPushNotification('Uwaga!', 'Przekroczono miesięczny budżet!');
       }
 
-      // Category limits
-      const limitKey = 'category-limits';
-      const savedLimits = JSON.parse(localStorage.getItem(limitKey) || '{}');
+      const limitKey='category-limits';
+      const savedLimits = JSON.parse(localStorage.getItem(limitKey)||'{}');
       renderCategoryLimitInputs(savedLimits);
 
-      // Check limits
-      categoryWarnings.innerHTML = '';
-      categories.forEach(cat => {
-        const limit = savedLimits[cat];
+      categoryWarnings.innerHTML='';
+      categories.forEach(cat=>{
+        const limit=savedLimits[cat];
         if (!limit) return;
-        const spent = monthly.filter(t => t.amount < 0 && t.category === cat)
-          .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-        if (spent > limit) {
-          const p = document.createElement('p');
+        const spent=monthly.filter(t=>t.amount<0&&t.category===cat)
+          .reduce((sum,t)=>sum+Math.abs(t.amount),0);
+        if (spent>limit) {
+          const p=document.createElement('p');
           p.classList.add('warning');
-          p.textContent = `Przekroczono limit dla kategorii "${cat}": ${spent.toFixed(2)} / ${limit.toFixed(2)} zł`;
+          p.textContent=`Przekroczono limit dla "${cat}": ${spent.toFixed(2)}/${limit.toFixed(2)} zł`;
           categoryWarnings.appendChild(p);
-          showPushNotification('Limit przekroczony', `W kategorii "${cat}" wydano za dużo.`);
+          showPushNotification('Limit przekroczony',`W kategorii "${cat}" wydano za dużo.`);
+          sendPushNotification('Limit przekroczony',`W kategorii "${cat}" wydano za dużo.`);
         }
       });
     }
 
-    document.getElementById('save-budget').addEventListener('click', () => {
-      const key = 'monthly-budget';
-      const v = Number(budgetInput.value);
-      if (!isNaN(v)) {
-        localStorage.setItem(key, v);
-        renderBudget();
-      }
+    document.getElementById('save-budget').addEventListener('click',()=>{
+      const key='monthly-budget'; const v=Number(budgetInput.value);
+      if (!isNaN(v)) { localStorage.setItem(key,v); renderBudget(); }
     });
 
-    document.getElementById('save-category-limits').addEventListener('click', () => {
-      const newLimits = {};
-      categoryLimitsElem.querySelectorAll('input').forEach(input => {
-        const cat = input.dataset.category;
-        const val = Number(input.value);
-        if (!isNaN(val)) newLimits[cat] = val;
+    document.getElementById('save-category-limits').addEventListener('click',()=>{
+      const newLimits={};
+      categoryLimitsElem.querySelectorAll('input').forEach(input=>{
+        const cat=input.dataset.category; const val=Number(input.value);
+        if (!isNaN(val)) newLimits[cat]=val;
       });
-      localStorage.setItem('category-limits', JSON.stringify(newLimits));
+      localStorage.setItem('category-limits',JSON.stringify(newLimits));
       renderBudget();
     });
 
     function showPushNotification(title, body) {
-      if (Notification.permission === 'granted') {
-        new Notification(title, { body });
-      } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') new Notification(title, { body });
-        });
+      if (Notification.permission==='granted') new Notification(title,{body});
+      else if (Notification.permission!=='denied') {
+        Notification.requestPermission().then(p=>{if(p==='granted') new Notification(title,{body});});
       }
     }
 
-    // Init
     loadTransactions();
   </script>
 </body>
