@@ -5,8 +5,7 @@ const FILES = [
   'income.html',
   'budget.html',
   'style.css',
-  'app.js',
-  'favicon.ico' // optional, to avoid 404 if you have a favicon
+  'app.js'
 ];
 
 self.addEventListener('install', evt => {
