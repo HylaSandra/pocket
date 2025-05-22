@@ -27,6 +27,10 @@
   <script>
     const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
     let transactions = [];
+    const startDate = document.getElementById('start-date');
+    const endDate = document.getElementById('end-date');
+    const transactionList = document.getElementById('transaction-list');
+    const totalSum = document.getElementById('total-sum');
 
     async function loadIncome() {
       try {
@@ -52,10 +56,10 @@
       const start = startDate.value ? new Date(startDate.value) : null;
       const end = endDate.value ? new Date(endDate.value) : null;
       const list = filterIncome(start, end);
-      document.getElementById('transaction-list').innerHTML = '';
+      transactionList.innerHTML = '';
       if (list.length === 0) {
-        document.getElementById('transaction-list').innerHTML = '<li>Brak przychodów w tym okresie.</li>';
-        document.getElementById('total-sum').textContent = 'Suma przychodów: 0 zł';
+        transactionList.innerHTML = '<li>Brak przychodów w tym okresie.</li>';
+        totalSum.textContent = 'Suma przychodów: 0 zł';
         return;
       }
       let sum = 0;
@@ -66,12 +70,12 @@
         li.innerHTML = `➕ ${t.amount} zł [${new Date(t.date).toLocaleDateString()}] <button data-id="${t._id}" class="delete-btn">Usuń</button>`;
         fragment.appendChild(li);
       });
-      document.getElementById('transaction-list').appendChild(fragment);
-      document.getElementById('total-sum').textContent = `Suma przychodów: ${sum.toFixed(2)} zł`;
+      transactionList.appendChild(fragment);
+      totalSum.textContent = `Suma przychodów: ${sum.toFixed(2)} zł`;
     }
 
     document.getElementById('filter-btn').addEventListener('click', renderIncome);
-    document.getElementById('transaction-list').addEventListener('click', e => {
+    transactionList.addEventListener('click', e => {
       if (e.target.classList.contains('delete-btn')) {
         deleteIncome(e.target.dataset.id);
       }
