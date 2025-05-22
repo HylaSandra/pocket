@@ -26,6 +26,10 @@
   <script>
     const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
     let transactions = [];
+    const startDate = document.getElementById('start-date');
+    const endDate = document.getElementById('end-date');
+    const transactionList = document.getElementById('transaction-list');
+    const totalSum = document.getElementById('total-sum');
 
     async function loadExpenses() {
       try {
@@ -51,7 +55,7 @@
       const start = startDate.value ? new Date(startDate.value) : null;
       const end = endDate.value ? new Date(endDate.value) : null;
       const list = filterExpenses(start, end);
-      transaction-list.innerHTML = '';
+      transactionList.innerHTML = '';
       if (list.length === 0) {
         transactionList.innerHTML = '<li>Brak wydatków w tym okresie.</li>';
         totalSum.textContent = 'Suma wydatków: 0 zł';
@@ -65,12 +69,12 @@
         li.innerHTML = `➖ ${Math.abs(t.amount)} zł (${t.category}) [${new Date(t.date).toLocaleDateString()}] <button data-id="${t._id}" class="delete-btn">Usuń</button>`;
         fragment.appendChild(li);
       });
-      document.getElementById('transaction-list').appendChild(fragment);
+      transactionList.appendChild(fragment);
       totalSum.textContent = `Suma wydatków: ${sum.toFixed(2)} zł`;
     }
 
     document.getElementById('filter-btn').addEventListener('click', renderExpenses);
-    document.getElementById('transaction-list').addEventListener('click', e => {
+    transactionList.addEventListener('click', e => {
       if (e.target.classList.contains('delete-btn')) {
         deleteExpense(e.target.dataset.id);
       }
