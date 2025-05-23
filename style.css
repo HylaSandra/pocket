@@ -1,6 +1,110 @@
-body { font-family: sans-serif; margin: 1rem; }
-h1 { color: #007bff; }
-form, ul { margin-top: 1rem; }
-li { margin: 0.5rem 0; }
-button { padding: 0.5rem 1rem; border: none; background: #007bff; color: white; border-radius: 4px; }
-input, select { padding: 0.5rem; margin-right: 0.5rem; }
+/* ------------------------------------------------------------
+   Global
+------------------------------------------------------------ */
+body {
+  text-align: center;
+  font-family: sans-serif;
+  margin: 1rem;
+}
+
+/* ------------------------------------------------------------
+   Nawigacja
+------------------------------------------------------------ */
+nav {
+  margin-bottom: 1rem;
+}
+nav a {
+  text-decoration: none;
+  color: #007bff;
+  margin: 0 0.5rem;
+}
+nav a:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   Formularze – układ pionowy, wyśrodkowane
+------------------------------------------------------------ */
+form {
+  display: inline-block;     /* nadaje formie blok o szerokości według zawartości */
+  text-align: left;          /* etykiety wewnątrz form są wyrównane do lewej */
+  margin: 1rem auto;         /* wyśrodkowanie formy */
+}
+form label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+form input,
+form select,
+form button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 0.75rem;
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------
+   Lista transakcji
+------------------------------------------------------------ */
+#transaction-list {
+  list-style: none;
+  padding: 0;
+  max-width: 400px;
+  margin: 1rem auto;
+  text-align: left;
+}
+#transaction-list li {
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: #333;
+  position: relative;
+}
+
+/* Przycisk usuń wewnątrz rekordu */
+#transaction-list li button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+}
+
+/* ------------------------------------------------------------
+   Kolory dla wydatków wg kategorii
+   (zakłada, że w <li> masz atrybut data-category="nazwa")
+------------------------------------------------------------ */
+#transaction-list li[data-category="artykuły spożywcze"] {
+  background-color: #fde2e2;
+}
+#transaction-list li[data-category="dom"] {
+  background-color: #e2f0fd;
+}
+#transaction-list li[data-category="transport"] {
+  background-color: #e2fde2;
+}
+#transaction-list li[data-category="zdrowie"] {
+  background-color: #fde2fd;
+}
+#transaction-list li[data-category="rozrywka"] {
+  background-color: #fcf8e8;
+}
+#transaction-list li[data-category="edukacja"] {
+  background-color: #e8f8fc;
+}
+#transaction-list li[data-category="inne"] {
+  background-color: #f0f0f0;
+}
+
+/* ------------------------------------------------------------
+   Podsumowania na stronie budżetu
+------------------------------------------------------------ */
+#total-expenses,
+#total-income,
+#warning,
+#category-warnings p {
+  max-width: 400px;
+  margin: 0.5rem auto;
+  text-align: left;
+}
