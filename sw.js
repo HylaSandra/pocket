@@ -37,13 +37,11 @@ self.addEventListener('activate', evt => {
 });
 
 self.addEventListener('fetch', evt => {
-  // Bypass cache for API requests
   if (evt.request.url.includes('/api/')) {
     evt.respondWith(fetch(evt.request));
     return;
   }
 
-  // Cache-first strategy for all other requests
   evt.respondWith(
     caches.match(evt.request).then(resp => resp || fetch(evt.request))
   );
