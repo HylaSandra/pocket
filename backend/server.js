@@ -7,12 +7,12 @@ const morgan     = require('morgan');
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
-// Middleware
+
 app.use(helmet());
 app.use(express.json());
 app.use(morgan('tiny'));
 
-// CORS – frontend host
+// CORS
 const allowedOrigins = [process.env.FRONTEND_ORIGIN];
 app.use(cors({
   origin: (origin, callback) => {
@@ -22,7 +22,7 @@ app.use(cors({
   }
 }));
 
-// MongoDB connection
+// MongoDB
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri, { tlsAllowInvalidCertificates: true });
 let txCol, subsCol;
@@ -34,10 +34,8 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
-// API router
 const router = express.Router();
 
-// Health-check
 router.get('/health', (req, res) => res.send('OK'));
 
 // VAPID public key
