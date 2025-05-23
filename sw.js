@@ -5,7 +5,7 @@ const FILES = [
   'income.html',
   'budget.html',
   'style.css',
-  'app.js'
+  'app.js',
   'manifest.json'
 ];
 
