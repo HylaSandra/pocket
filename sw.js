@@ -6,6 +6,7 @@ const FILES = [
   'budget.html',
   'style.css',
   'app.js'
+  'manifest.json'
 ];
 
 self.addEventListener('install', evt => {
