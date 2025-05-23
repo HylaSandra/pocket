@@ -1,11 +1,9 @@
-/* Globalne centrowanie */
 body {
   text-align: center;
   font-family: sans-serif;
   margin: 1rem;
 }
 
-/* Nawigacja */
 nav {
   margin-bottom: 1rem;
 }
@@ -18,7 +16,7 @@ nav a:hover {
   text-decoration: underline;
 }
 
-/* Formularze pionowo */
+/* formularze */
 form {
   display: inline-block;
   text-align: left;
@@ -38,7 +36,7 @@ form button {
   box-sizing: border-box;
 }
 
-/* Lista transakcji */
+/* transakcje */
 #transaction-list {
   list-style: none;
   padding: 0;
@@ -61,16 +59,6 @@ form button {
   padding: 0.25rem 0.5rem;
 }
 
-/* Kolorowanie wydatków wg kategorii */
-#transaction-list li[data-category="spożywcze"] { background-color: #fde2e2; }
-#transaction-list li[data-category="dom"]       { background-color: #e2f0fd; }
-#transaction-list li[data-category="transport"] { background-color: #e2fde2; }
-#transaction-list li[data-category="zdrowie"]   { background-color: #fde2fd; }
-#transaction-list li[data-category="rozrywka"] { background-color: #fcf8e8; }
-#transaction-list li[data-category="edukacja"]  { background-color: #e8f8fc; }
-#transaction-list li[data-category="inne"]      { background-color: #f0f0f0; }
-
-/* Budżet - podsumowania */
 #total-expenses,
 #total-income,
 #warning,
