@@ -67,7 +67,6 @@
     const categorySelect = document.getElementById('category');
     const list = document.getElementById('transaction-list');
 
-    // Toggle category
     typeSelect.addEventListener('change', () => {
       if (typeSelect.value === 'expense') {
         categorySelect.disabled = false;
@@ -118,7 +117,6 @@
       });
     }
 
-    // Initial load
     loadTransactions();
   </script>
 </body>
