@@ -61,49 +61,65 @@
   <ul id="transaction-list"></ul>
 
   <script src="app.js"></script>
-  <script>
-    const form = document.getElementById('transaction-form');
-    const typeSelect = document.getElementById('type');
-    const categorySelect = document.getElementById('category');
-    const list = document.getElementById('transaction-list');
+<script>
+  const form = document.getElementById('transaction-form');
+  const typeSelect = document.getElementById('type');
+  const categorySelect = document.getElementById('category');
+  const list = document.getElementById('transaction-list');
 
-    typeSelect.addEventListener('change', () => {
-      if (typeSelect.value === 'expense') {
-        categorySelect.disabled = false;
-      } else {
-        categorySelect.disabled = true;
-        categorySelect.value = '';
-      }
-    });
+  const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
 
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-      const type = typeSelect.value;
-      const category = type === 'expense' ? categorySelect.value : null;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const date = document.getElementById('date').value;
-      const description = document.getElementById('description').value;
-      const tx = { amount: type === 'expense' ? -amount : amount, category, date, description };
-      
-      // Save locally
-      const arr = JSON.parse(localStorage.getItem('transactions') || '[]');
-      arr.push(tx);
-      localStorage.setItem('transactions', JSON.stringify(arr));
-
-      // Save to server
-      await fetch('https://pocket-be-xt4u.onrender.com/api/transactions', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tx)
-      });
-
-      // Refresh list
-      loadTransactions();
-      form.reset();
+  typeSelect.addEventListener('change', () => {
+    if (typeSelect.value === 'expense') {
+      categorySelect.disabled = false;
+    } else {
       categorySelect.disabled = true;
-    });
+      categorySelect.value = '';
+    }
+  });
 
-    async function loadTransactions() {
-      const res = await fetch('https://pocket-be-xt4u.onrender.com/api/transactions');
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const type = typeSelect.value;
+    const category = type === 'expense' ? categorySelect.value : null;
+    const amount = parseFloat(document.getElementById('amount').value);
+    const date = document.getElementById('date').value;
+    const description = document.getElementById('description').value;
+
+    const tx = {
+      amount: type === 'expense' ? -amount : amount,
+      category,
+      date,
+      description
+    };
+
+    const offlineTx = JSON.parse(localStorage.getItem('transactions') || '[]');
+    offlineTx.push(tx);
+    localStorage.setItem('transactions', JSON.stringify(offlineTx));
+
+    if (navigator.onLine) {
+      try {
+        await fetch(`${API_BASE}/transactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tx)
+        });
+        console.log('Transakcja wysłana online.');
+      } catch (err) {
+        console.warn('Błąd podczas zapisu online. Zapisano offline.');
+      }
+    } else {
+      console.warn('Brak internetu – zapisano tylko offline.');
+    }
+
+    loadTransactions();
+    form.reset();
+    categorySelect.disabled = true;
+  });
+
+  async function loadTransactions() {
+    try {
+      const res = await fetch(`${API_BASE}/transactions`);
       const { transactions } = await res.json();
       list.innerHTML = '';
       transactions.forEach(t => {
@@ -115,9 +131,42 @@
         li.textContent = text;
         list.append(li);
       });
+    } catch (err) {
+      list.innerHTML = '<li>Brak internetu. Pokażę dane offline.</li>';
+      const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+      transactions.forEach(t => {
+        const li = document.createElement('li');
+        let text = `${t.amount} zł`;
+        if (t.category) text += ` (${t.category})`;
+        if (t.description) text += ` - ${t.description}`;
+        text += ` [${new Date(t.date).toLocaleDateString()}]`;
+        li.textContent = text;
+        list.append(li);
+      });
     }
+  }
 
-    loadTransactions();
-  </script>
+  window.addEventListener('online', async () => {
+    const offlineTx = JSON.parse(localStorage.getItem('transactions') || '[]');
+    if (offlineTx.length > 0) {
+      try {
+        const res = await fetch(`${API_BASE}/transactions/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transactions: offlineTx })
+        });
+        if (res.ok) {
+          localStorage.removeItem('transactions');
+          console.log('Zsynchronizowano transakcje.');
+          loadTransactions();
+        }
+      } catch (err) {
+        console.warn('Nie udało się zsynchronizować:', err);
+      }
+    }
+  });
+
+  loadTransactions();
+</script>
 </body>
 </html>
