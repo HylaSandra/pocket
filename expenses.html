@@ -34,7 +34,7 @@
 
     async function loadExpenses() {
       try {
-        const res = await fetch(`${API_BASE}/transactions`);
+        const res = await fetch(`${window.API_BASE}/transactions`);
         if (!res.ok) throw new Error('Błąd sieci');
         const { transactions: txs } = await res.json();
         transactions = txs;
@@ -86,7 +86,7 @@
       localStorage.setItem('transactions', JSON.stringify(transactions));
       renderExpenses();
       try {
-        await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+        await fetch(`${window.API_BASE}/transactions/${id}`, { method: 'DELETE' });
       } catch {}
     }
 
