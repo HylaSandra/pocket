@@ -16,7 +16,7 @@ async function getPublicKey() {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(key)
   });
-  await fetch(`${API_BASE}/save-subscription`, {
+  await fetch(`${window.API_BASE}/save-subscription`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sub)
