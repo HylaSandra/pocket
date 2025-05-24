@@ -46,8 +46,6 @@
 
   <script>
     
-    const API_BASE = window.API_BASE;
-    
     let transactions = [];
     const budgetInput = document.getElementById('budget-input');
     const currentBudgetDisplay = document.getElementById('current-budget');
@@ -60,7 +58,7 @@
 
     async function loadTransactions() {
       try {
-        const res = await fetch(`${API_BASE}/transactions`);
+        const res = await fetch(`${window.API_BASE}/transactions`);
         if (!res.ok) throw new Error();
         const data = await res.json();
         transactions = data.transactions;
@@ -85,7 +83,7 @@
 
     async function sendPushNotification(title, body) {
       try {
-        await fetch(`${API_BASE}/send-notification`, {
+        await fetch(`${window.API_BASE}/send-notification`, {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ title, body, url: '/budget.html' })
