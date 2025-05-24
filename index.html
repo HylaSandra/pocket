@@ -67,8 +67,6 @@
   const categorySelect = document.getElementById('category');
   const list = document.getElementById('transaction-list');
 
-  const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
-
   typeSelect.addEventListener('change', () => {
     if (typeSelect.value === 'expense') {
       categorySelect.disabled = false;
