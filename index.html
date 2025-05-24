@@ -97,7 +97,7 @@
 
     if (navigator.onLine) {
       try {
-        await fetch(`${API_BASE}/transactions`, {
+        await fetch(`${window.API_BASE}/transactions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(tx)
@@ -117,7 +117,7 @@
 
   async function loadTransactions() {
     try {
-      const res = await fetch(`${API_BASE}/transactions`);
+      const res = await fetch(`${window.API_BASE}/transactions`);
       const { transactions } = await res.json();
       list.innerHTML = '';
       transactions.forEach(t => {
@@ -148,7 +148,7 @@
     const offlineTx = JSON.parse(localStorage.getItem('transactions') || '[]');
     if (offlineTx.length > 0) {
       try {
-        const res = await fetch(`${API_BASE}/transactions/sync`, {
+        const res = await fetch(`${window.API_BASE}/transactions/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ transactions: offlineTx })
