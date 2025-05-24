@@ -1,7 +1,7 @@
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
-const API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
+window.API_BASE = 'https://pocket-be-xt4u.onrender.com/api';
 
 async function getPublicKey() {
   const res = await fetch(`${API_BASE}/vapidPublicKey`);
