@@ -38,7 +38,9 @@ self.addEventListener('activate', evt => {
 
 self.addEventListener('fetch', evt => {
   if (evt.request.url.includes('/api/')) {
-    evt.respondWith(fetch(evt.request));
+    evt.respondWith(
+      fetch(evt.request).catch(err => new Response('', { status: 503 }))
+    );
     return;
   }
 
